@@ -40,14 +40,14 @@ import javax.swing.JLabel;
 public class Client {
 
 	private static JFrame frmChatClient;
-	public static JTextArea textArea;
-	public static JEditorPane editorPane_1;
-	public static PrintWriter out;
-	public static JLabel charCount;
-	public static boolean hasQuit;
-	public static BufferedReader is;
-	public static Socket hostSocket;
-	public static boolean firstPass = false;
+	private static JTextArea textArea;
+	private static JEditorPane editorPane_1;
+	private static PrintWriter out;
+	private static JLabel charCount;
+	private static boolean hasQuit;
+	private static BufferedReader is;
+	private static Socket hostSocket;
+	private static boolean firstPass = false;
 	/**
 	 * Launch the application.
 	 */
@@ -102,6 +102,8 @@ public class Client {
 		{
 			System.out.println("connecting...");
 			String output;
+			editorPane_1.setEditable(false);
+			editorPane_1.setText("");
 			do
 			{
 				hostSocket.connect(new InetSocketAddress("Team03LoadBalancer-63998421.us-east-1.elb.amazonaws.com",8732));
@@ -111,6 +113,7 @@ public class Client {
 				output = is.readLine();
 			}while(output==null);
 			textArea.append("\n"+output);
+			editorPane_1.setEditable(true);
 
 		} 
 		catch (IOException e) 

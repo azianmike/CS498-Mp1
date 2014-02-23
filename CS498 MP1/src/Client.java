@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
+import java.text.DecimalFormat;
 
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
@@ -39,15 +40,15 @@ import javax.swing.JLabel;
 
 public class Client {
 
-	private static JFrame frmChatClient;
-	private static JTextArea textArea;
-	private static JEditorPane editorPane_1;
-	private static PrintWriter out;
-	private static JLabel charCount;
-	private static boolean hasQuit;
-	private static BufferedReader is;
-	private static Socket hostSocket;
-	private static boolean firstPass = false;
+	public static JFrame frmChatClient;
+	public static JTextArea textArea;
+	public static JEditorPane editorPane_1;
+	public static PrintWriter out;
+	public static JLabel charCount;
+	public static boolean hasQuit;
+	public static BufferedReader is;
+	public static Socket hostSocket;
+	public static boolean firstPass = false;
 	/**
 	 * Launch the application.
 	 */
@@ -75,10 +76,6 @@ public class Client {
 			initialize();
 			firstPass = true;
 		}
-		else
-		{
-			textArea.append("\nServer went down... Reconnecting");
-		}
 		connectToServer();		
 		DataOutputStream os = new DataOutputStream(hostSocket.getOutputStream());
 		out = new PrintWriter(os);
@@ -87,7 +84,7 @@ public class Client {
 	}
 
 	public void startReader() {
-		Reader currReader = new Reader(is,textArea, this); 
+		Reader currReader = new Reader(is,textArea, this, charCount); 
 		currReader.start();
 	}
 	
@@ -102,18 +99,18 @@ public class Client {
 		{
 			System.out.println("connecting...");
 			String output;
-			editorPane_1.setEditable(false);
-			editorPane_1.setText("");
 			do
 			{
 				hostSocket.connect(new InetSocketAddress("Team03LoadBalancer-63998421.us-east-1.elb.amazonaws.com",8732));
+				//reconnect here
+				
 				DataInputStream in = null;
 				in = new DataInputStream(hostSocket.getInputStream());
 				is = new BufferedReader(new InputStreamReader(in));
 				output = is.readLine();
 			}while(output==null);
+			
 			textArea.append("\n"+output);
-			editorPane_1.setEditable(true);
 
 		} 
 		catch (IOException e) 
@@ -264,14 +261,16 @@ class Reader extends Thread
 	public JTextArea commentArea;
 	public boolean hasQuit;
 	public Client currConn;
+	private JLabel charCount;
 	
-    public Reader(BufferedReader is, JTextArea commentArea, Client currConn) {
+    public Reader(BufferedReader is, JTextArea commentArea, Client currConn, JLabel charCount) {
 		// TODO Auto-generated constructor stub
     	this.is = is;
     	this.commentArea = commentArea;
     	hasQuit = false;
     	this.currConn = currConn;
     	System.out.println("enter constructor");
+    	this.charCount = charCount;
    }
 
    public void run ()
@@ -310,8 +309,11 @@ class Reader extends Thread
 
 					if(output.contains("\\r\\n\\r\\n"))
 					{
-						String outputString = output.substring(8);
-						commentArea.append("\n" + outputString);
+						String outputString = output.substring(8,output.length()-4);
+						int charNum = Integer.parseInt(charCount.getText());
+						String send = String.format(outputString+"%.2f", (.1)*charNum);
+						commentArea.append("\n" + send);
+						
 						hasQuit=true;
 					}
 					else

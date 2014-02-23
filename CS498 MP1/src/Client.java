@@ -75,6 +75,10 @@ public class Client {
 			initialize();
 			firstPass = true;
 		}
+		else
+		{
+			textArea.append("\nServer went down... Reconnecting");
+		}
 		connectToServer();		
 		DataOutputStream os = new DataOutputStream(hostSocket.getOutputStream());
 		out = new PrintWriter(os);
@@ -101,14 +105,11 @@ public class Client {
 			do
 			{
 				hostSocket.connect(new InetSocketAddress("Team03LoadBalancer-63998421.us-east-1.elb.amazonaws.com",8732));
-				//reconnect here
-				
 				DataInputStream in = null;
 				in = new DataInputStream(hostSocket.getInputStream());
 				is = new BufferedReader(new InputStreamReader(in));
 				output = is.readLine();
 			}while(output==null);
-			
 			textArea.append("\n"+output);
 
 		} 

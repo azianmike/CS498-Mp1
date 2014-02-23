@@ -39,14 +39,14 @@ import javax.swing.JLabel;
 
 public class Client {
 
-	private JFrame frmChatClient;
-	public JTextArea textArea;
-	public JEditorPane editorPane_1;
-	public PrintWriter out;
-	public JLabel charCount;
-	public boolean hasQuit;
-	public BufferedReader is;
-	public Socket hostSocket;
+	private static JFrame frmChatClient;
+	public static JTextArea textArea;
+	public static JEditorPane editorPane_1;
+	public static PrintWriter out;
+	public static JLabel charCount;
+	public static boolean hasQuit;
+	public static BufferedReader is;
+	public static Socket hostSocket;
 	public static boolean firstPass = false;
 	/**
 	 * Launch the application.
@@ -56,7 +56,7 @@ public class Client {
 			public void run() {
 				try {
 					Client window = new Client();
-					window.frmChatClient.setVisible(true);
+					Client.frmChatClient.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -70,9 +70,12 @@ public class Client {
 	 */
 	public Client() throws IOException {
 		hostSocket = new Socket();
-		is = connectToServer();
-		initialize();
-		
+		if(!firstPass)
+		{
+			initialize();
+			firstPass = true;
+		}
+		connectToServer();		
 		DataOutputStream os = new DataOutputStream(hostSocket.getOutputStream());
 		out = new PrintWriter(os);
 		
@@ -84,7 +87,7 @@ public class Client {
 		currReader.start();
 	}
 	
-	BufferedReader connectToServer()
+	public void connectToServer()
 	{
 		hasQuit = false;
 		if(hostSocket.isClosed())
@@ -93,16 +96,25 @@ public class Client {
 		}
 		try 
 		{
-			hostSocket.connect(new InetSocketAddress("Team03LoadBalancer-63998421.us-east-1.elb.amazonaws.com",8732));
-			DataInputStream in = null;
-			in = new DataInputStream(hostSocket.getInputStream());
-			BufferedReader is = new BufferedReader(new InputStreamReader(in));
-			return is;
+			System.out.println("connecting...");
+			String output;
+			do
+			{
+				hostSocket.connect(new InetSocketAddress("Team03LoadBalancer-63998421.us-east-1.elb.amazonaws.com",8732));
+				//reconnect here
+				
+				DataInputStream in = null;
+				in = new DataInputStream(hostSocket.getInputStream());
+				is = new BufferedReader(new InputStreamReader(in));
+				output = is.readLine();
+			}while(output==null);
+			
+			textArea.append("\n"+output);
+
 		} 
 		catch (IOException e) 
 		{
 			e.printStackTrace();
-			return null;
 		}		
 	}
 	
@@ -265,13 +277,14 @@ class Reader extends Thread
 			String output = null;
 			try {
 				output = is.readLine();
+
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			if(output == null && hasQuit)
 			{
-				return;
+				break;
 			}
 			else
 			{	

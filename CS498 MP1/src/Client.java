@@ -55,6 +55,7 @@ public class Client {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+					@SuppressWarnings("unused")
 					Client window = new Client();
 					Client.frmChatClient.setVisible(true);
 				} catch (Exception e) {
@@ -77,6 +78,7 @@ public class Client {
 		}
 		else
 		{
+			//message to reconnect to server
 			textArea.append("\nServer went down... Reconnecting");
 		}
 		connectToServer();		
@@ -86,11 +88,17 @@ public class Client {
 		startReader();
 	}
 
+	/**
+	 * Starts a seperate thread for the reader to read chats from server
+	 */
 	public void startReader() {
-		Reader currReader = new Reader(is,textArea, this); 
+		Reader currReader = new Reader(is,textArea, this, charCount); 
 		currReader.start();
 	}
 	
+	/**
+	 * Connects to the load balancer
+	 */
 	public void connectToServer()
 	{
 		hasQuit = false;
@@ -122,15 +130,6 @@ public class Client {
 		}		
 	}
 	
-	public void closeConnection()
-	{
-		try {
-			hostSocket.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 
 	/**
 	 * Initialize the contents of the frame.
@@ -236,6 +235,9 @@ public class Client {
 		frmChatClient.getContentPane().setLayout(groupLayout);
 	}
 	
+	/**
+	 * Grabs text from GUI to send to server
+	 */
 	private void sendText()
 	{
 		String toSend = editorPane_1.getText();
@@ -258,22 +260,31 @@ public class Client {
 	}
 }
 
+/**
+ * Seperate class to read from server
+ * @author Michael
+ *
+ */
 class Reader extends Thread
 {
 	public BufferedReader is;
 	public JTextArea commentArea;
 	public boolean hasQuit;
 	public Client currConn;
+	private JLabel charCount;
 	
-    public Reader(BufferedReader is, JTextArea commentArea, Client currConn) {
+    public Reader(BufferedReader is, JTextArea commentArea, Client currConn, JLabel charCount) {
 		// TODO Auto-generated constructor stub
     	this.is = is;
     	this.commentArea = commentArea;
     	hasQuit = false;
     	this.currConn = currConn;
-    	System.out.println("enter constructor");
+    	this.charCount = charCount;    	
    }
 
+    /**
+     * Runs seperate thread and continously reads
+     */
    public void run ()
    {
 	   while(true)
@@ -286,15 +297,17 @@ class Reader extends Thread
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
+			//Checks to see if user has quit and if not connected to server anymore
 			if(output == null && hasQuit)
 			{
 				break;
 			}
 			else
 			{	
+				//checks to see if server is down, reconnects if down
 				if(output == null && !hasQuit)
 				{
-					System.out.println("entered reconnect server");
 					
 					try {
 						currConn = new Client();
@@ -307,11 +320,14 @@ class Reader extends Thread
 				}
 				else
 				{
-
+					//check for exit message
 					if(output.contains("\\r\\n\\r\\n"))
 					{
-						String outputString = output.substring(8);
-						commentArea.append("\n" + outputString);
+						String outputString = output.substring(8,output.length()-4);
+						int charNum = Integer.parseInt(charCount.getText());
+						String send = String.format(outputString+"%.2f", (.1)*charNum);
+						commentArea.append("\n" + send);
+						
 						hasQuit=true;
 					}
 					else
@@ -322,6 +338,5 @@ class Reader extends Thread
 			}
 			
 		}
-	   	System.out.println("broke out");
    }
 }
